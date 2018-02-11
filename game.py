@@ -1,53 +1,41 @@
 import numpy as np
-import rl
 
 class Game:
 
     def __init__(self):
-        self.shape = (3,3,3,3,3,3,3,3,3,9,)
-        rl.Q(reward, self.shape)
-        self.state = np.zeros((3,3,), int)
+        self.anew()
 
-    def start(self):
-        player = a
-        while not self.is_over():
-            val, move = yield
-            self.state[move] = val
+    def anew(self):
+        self.state = np.zeros((3,3,), int)
+        print('set state', self.state)
+
+    def result(self, player):
+        return result(self.state, player)
 
     def is_over(self):
-        # all spots taken up
-        if 0 not in self.state:
-            return True
+        return self.result(1) == 'win' or \
+            self.result(2) == 'win' or \
+            self.result(2) == 'draw'
 
-        # winning column
-        if np.any(
-            np.logical_and(
-                np.all(self.state == self.state[0,:], axis=0),
-                np.all(self.state > 0, axis=0)
-            )
-        ):
-            return True
+def result(state, player):
+    # winning column
+    if np.any(np.all(state == player, axis=0)):
+        return 'win'
 
-        # winning row
-        if np.any(
-            np.logical_and(
-                np.all(self.state == self.state[:,0], axis=1),
-                np.all(self.state > 0, axis=1)
-            )
-        ):
-            return True
+    # winning row
+    if np.any(np.all(state == player, axis=1)):
+        return 'win'
 
-        # winning diagonal
-        if np.all(np.diag(self.state) > 0) and \
-            np.all(self.state[0,0] == np.diag(self.state)):
-            return True
+    # winning diagonal
+    if np.all(np.diag(state) == player):
+        return 'win'
 
-        rot = np.rot90(self.state)
-        if np.all(np.diag(rot) > 0) and \
-            np.all(rot[0,0] == np.diag(rot)):
-            return True
+    rot = np.rot90(state)
+    if np.all(np.diag(rot) == player):
+        return 'win'
 
-        return False
+    # all spots taken up
+    if 0 not in state:
+        return 'draw'
 
-def reward(state):
-    return 0
+    return None
