@@ -4,17 +4,17 @@ import game
 
 class Player:
 
-    def __init__(self, value, env):
+    def __init__(self, value, env, randomness=0):
         self.value = value # 1 or 2 for first or second player
         shape = (3,3,3,3,3,3,3,3,3,9,)
         self.prev = None
         self.curr = None
         self.env = env
         self.q = rl.Q(
-            reward,
+            reward_wrap(value),
             shape,
             actions_filter=actions_filter,
-            randomness=0.3
+            randomness=randomness
         )
 
     def play(self, env=None):
@@ -43,13 +43,28 @@ class Player:
         print(self.q.table[self.curr[:-1]])
 
     def tied(self):
-        #self.q.table[self.curr] = 0
-        #self.update()
-        pass
+        self.q.table[self.curr] = -0.1
+        self.update()
 
 # reward is always zero except for last step
-def reward(state):
-    return 0
+def reward_wrap(value):
+    def reward(state):
+        board = np.array(state[:-1]).reshape((3,3,))
+        move = to_coords(state[-1])
+        return 0.1 * count_in_path(board, move, value) 
+    return reward
+
+def count_in_path(board, coords, value):
+    print('coords', coords)
+    row, col = coords
+    matching = len(np.where(board[:,col] == value))
+    matching += len(np.where(board[row,:] == value))
+    if row + col in [0, 2, 4]:
+        matching += len(np.where(np.diag(board) == value))
+        matching += len(np.where(np.diag(np.rot90(board)) == value))
+    return matching
+
+    
 
 def actions_filter(state):
     # map from cartesion (x, y) to 0-8
@@ -60,7 +75,7 @@ def actions_filter(state):
 def to_coords(move):
     x = int(move / 3)
     y = move % 3
-    return x,y
+    return x,y,
 
 def state_to_board(state, p):
     coords = to_coords(state[-1])

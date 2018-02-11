@@ -10,9 +10,10 @@ CLIENT = 2
 game = g.Game()
 player = p.Player(CPU, game)
 try:
-    player_1.q.load('web_brain.npy')
-except Exception:
-    pass
+    player.q.load('player_1.npy')
+except Exception as e:
+    print('couldnt load stuff')
+    print(e)
 
 
 class ClientHandler(tornado.web.RequestHandler):
@@ -67,10 +68,10 @@ class GameHandler(tornado.web.RequestHandler):
     def post(self):
         if game.result(CPU) == 'win':
             player.won()
-            player.q.store('web_brain')
+            player.q.store('player_1')
         if game.result(CLIENT) == 'win':
             player.lost()
-            player.q.store('web_brain')
+            player.q.store('player_1')
         game.anew()
         self.write(json.dumps({
             'board': game.state.tolist(),
