@@ -7,7 +7,6 @@ class Game:
 
     def anew(self):
         self.state = np.zeros((3,3,), int)
-        print('set state', self.state)
 
     def result(self, player):
         return result(self.state, player)

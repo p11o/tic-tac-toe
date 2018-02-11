@@ -13,10 +13,12 @@ class Player:
         self.q = rl.Q(
             reward,
             shape,
-            actions_filter=actions_filter
+            actions_filter=actions_filter,
+            randomness=0.3
         )
 
-    def play(self, env):
+    def play(self, env=None):
+        env = self.env
         full_state = np.append(env.state.flatten(), [0]) # [0] is a dummy value
         self.curr = argmax = self.q.argmax(full_state, )
         move = argmax[-1]

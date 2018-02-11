@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 def default_actions_filter(state):
     return [0]
@@ -8,7 +9,7 @@ def default_discretizer(state):
 
 class Q:
 
-    def __init__(self, r, shape, discretize=default_discretizer,
+    def __init__(self, r, shape, discretize=default_discretizer, randomness=0,
                  actions_filter=default_actions_filter, table=None):
         """
         Initializes the Q function.
@@ -18,6 +19,7 @@ class Q:
         self.discretize = discretize
         self.table = np.zeros(shape) if table is None else table
         self.actions_filter = actions_filter
+        self.randomness = randomness
 
     def update(self, s0, s1, playa, alpha=0.3, gamma=1):
         ds0 = self.discretize(s0)
@@ -32,7 +34,7 @@ class Q:
         *state, _ = state
         action_indexes = self.actions_filter(state)
         allowed_states = (*state, action_indexes)
-        if np.any(self.table[allowed_states] == 0):
+        if np.any(self.table[allowed_states] == 0) or random.random() < self.randomness:
             best_action = np.random.choice(range(len(self.table[allowed_states])))
         else:
             best_action = np.argmax(self.table[allowed_states])
