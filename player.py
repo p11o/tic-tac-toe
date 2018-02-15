@@ -38,12 +38,12 @@ class Player:
 
     def won(self):
         print('setting table win for player {}'.format(self.value))
-        self.q.table[self.curr] = 1
+        #self.q.table[self.curr] = 1
         self.update()
         print(self.q.table[self.curr[:-1]])
 
     def tied(self):
-        self.q.table[self.curr] = -0.1
+        self.q.table[self.curr] = 0.1
         self.update()
 
 # reward is always zero except for last step
@@ -55,7 +55,6 @@ def reward_wrap(value):
     return reward
 
 def count_in_path(board, coords, value):
-    print('coords', coords)
     row, col = coords
     matching = len(np.where(board[:,col] == value))
     matching += len(np.where(board[row,:] == value))

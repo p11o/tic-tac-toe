@@ -21,14 +21,12 @@ class Q:
         self.actions_filter = actions_filter
         self.randomness = randomness
 
-    def update(self, s0, s1, playa, alpha=0.5, gamma=0.5):
+    def update(self, s0, s1, playa, alpha=0.1, gamma=0.9):
         ds0 = self.discretize(s0)
         ds1 = self.discretize(s1)
         s1max = self.argmax(ds1)
         reward = self.r(s0)
         value = ((1 - alpha) * self.table[ds0]) + (alpha * (reward + (gamma * self.table[s1max])))
-        if value > 1:
-            raise Exception('(1 - {}) * {}) + ({} * ({} + ({} * {})))'.format(alpha, self.table[ds0], alpha, reward, gamma, self.table[s1max]))
         self.table[ds0] = value
         return self.table
 

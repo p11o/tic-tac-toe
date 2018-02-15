@@ -5,7 +5,7 @@ import signal
 import sys
 
 game = g.Game()
-player_1 = p.Player(1, game, randomness=0.5)
+player_1 = p.Player(1, game, randomness=0.4)
 player_2 = p.Player(2, game, randomness=0.3)
 
 try:

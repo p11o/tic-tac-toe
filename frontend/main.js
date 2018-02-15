@@ -82,10 +82,19 @@ const main = () => {
 
     document.body.addEventListener('click', e => {
         const $target = e.target;
-        if ($target.matches('button')) {
+        if ($target.matches('.new')) {
             createNewGame().then(({board}) => renderBoard(board));
         }
-    })
+    });
+
+    document.body.addEventListener('click', e => {
+        const $target = e.target;
+        if ($target.matches('.cpu')) {
+            fetchRobotMove().then(({board}) => {
+                return renderBoard(board);
+            });
+        }
+    });
 };
 
 main();
