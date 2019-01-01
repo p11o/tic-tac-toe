@@ -9,7 +9,7 @@ def default_discretizer(state):
 
 class Q:
 
-    def __init__(self, r, shape, discretize=default_discretizer, randomness=0,
+    def __init__(self, r, shape, discretize=default_discretizer,
                  actions_filter=default_actions_filter, table=None):
         """
         Initializes the Q function.
@@ -19,45 +19,27 @@ class Q:
         self.discretize = discretize
         self.table = np.zeros(shape) if table is None else table
         self.actions_filter = actions_filter
-        self.randomness = randomness
 
-    def update(self, s0, s1, playa, alpha=0.1, gamma=0.9):
+    def update(self, s0, s1, alpha=0.1, gamma=0.9):
         ds0 = self.discretize(s0)
         ds1 = self.discretize(s1)
-        s1max = self.argmax(ds1)
+        action_indexes = self.actions_filter(s1)
+        s1max = self.argmax(ds1, action_indexes, randomness=0)
         reward = self.r(s0)
         value = ((1 - alpha) * self.table[ds0]) + (alpha * (reward + (gamma * self.table[s1max])))
         self.table[ds0] = value
-        return self.table
+        return s1max
 
-    def argmax(self, state):
+    def argmax(self, state, action_indexes, randomness=None):
         *state, _ = state
-        action_indexes = self.actions_filter(state)
         allowed_states = (*state, action_indexes)
-        if np.any(self.table[allowed_states] == 0) or random.random() < self.randomness:
+        # check if randomness is set or if any values haven't been populated
+        if np.any(self.table[allowed_states] == 0) or random.random() < randomness:
             best_action = np.random.choice(range(len(self.table[allowed_states])))
         else:
             best_action = np.argmax(self.table[allowed_states])
         ret = *state, action_indexes[best_action]
         return ret
-
-    def learn(self, states, iterations=10, alpha=0.7, gamma=0.9, callback=None):
-        for i in range(iterations):
-            #print('starting iteration {}'.format(i))
-            states_iter = states()
-            try:
-                s0 = next(states_iter)
-            except StopIteration:
-                continue
-            for s1 in states_iter:
-                #print(s0)
-                self.update(s0, s1, alpha, gamma)
-                s0 = s1
-            # include last state
-            self.table[self.discretize(s0)] += self.r(s0)
-            if callback is not None:
-                callback()
-        # print('table', self.table)
 
     def store(self, filename):
         np.save(filename, self.table)

@@ -12,7 +12,6 @@ player = p.Player(CPU, game)
 try:
     player.q.load('player_1.npy')
 except Exception as e:
-    print('couldnt load stuff')
     print(e)
 
 

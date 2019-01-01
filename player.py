@@ -26,21 +26,21 @@ class Player:
 
     def update(self):
         if self.prev is not None:
-            self.q.update(self.prev, self.curr, self.value)
+            self.q.update(self.prev, self.curr)
         self.prev = self.curr
 
     def lost(self):
         # set the reward for
-        print('setting table lost for player {}'.format(self.value))
+        #print('setting table lost for player {}'.format(self.value))
         self.q.table[self.curr] = -1
         self.update()
-        print(self.q.table[self.curr[:-1]])
+        #print(self.q.table[self.curr[:-1]])
 
     def won(self):
-        print('setting table win for player {}'.format(self.value))
+        #print('setting table win for player {}'.format(self.value))
         #self.q.table[self.curr] = 1
         self.update()
-        print(self.q.table[self.curr[:-1]])
+        #print(self.q.table[self.curr[:-1]])
 
     def tied(self):
         self.q.table[self.curr] = 0.1
@@ -63,8 +63,6 @@ def count_in_path(board, coords, value):
         matching += len(np.where(np.diag(np.rot90(board)) == value))
     return matching
 
-    
-
 def actions_filter(state):
     # map from cartesion (x, y) to 0-8
     zeros = np.argwhere(np.array(state) == 0).flatten()
@@ -75,10 +73,3 @@ def to_coords(move):
     x = int(move / 3)
     y = move % 3
     return x,y,
-
-def state_to_board(state, p):
-    coords = to_coords(state[-1])
-    board = state[0:9].reshape((3,3,))
-    board[coords] = p
-    return board
-    
