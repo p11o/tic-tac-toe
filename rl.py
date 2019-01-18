@@ -34,7 +34,7 @@ class Q:
         *state, _ = state
         allowed_states = (*state, action_indexes)
         # check if randomness is set or if any values haven't been populated
-        if np.any(self.table[allowed_states] == 0) or random.random() < randomness:
+        if random.random() < randomness:
             best_action = np.random.choice(range(len(self.table[allowed_states])))
         else:
             best_action = np.argmax(self.table[allowed_states])
