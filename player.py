@@ -1,67 +1,75 @@
 import rl
 import numpy as np
-import game
+import functools
 
 class Player:
 
-    def __init__(self, value, env, randomness=0):
+    def __init__(self, value, env, randomness=0.0):
         self.value = value # 1 or 2 for first or second player
         shape = (3,3,3,3,3,3,3,3,3,9,)
-        self.prev = None
-        self.curr = None
+        self.other = 2 if value == 1 else 1
         self.env = env
+        self.trajectory = []
         self.q = rl.Q(
-            reward_wrap(value),
+            self.reward(),
             shape,
             actions_filter=actions_filter,
             randomness=randomness
         )
 
-    def play(self, env=None):
+    def reset(self):
+        self.trajectory = []
+
+    def play(self):
         env = self.env
-        full_state = np.append(env.state.flatten(), [0]) # [0] is a dummy value
-        self.curr = argmax = self.q.argmax(full_state, )
-        move = argmax[-1]
-        env.state[to_coords(move)] = self.value
+        move = -1 # set move to -1 if end of game
+        state = env.state.flatten().copy()
+        if not env.is_over():
+            argmax = self.q.argmax(state)
+            move = argmax[-1]
 
-    def update(self):
-        if self.prev is not None:
-            self.q.update(self.prev, self.curr, self.value)
-        self.prev = self.curr
+            env.state[to_coords(move)] = self.value
 
-    def lost(self):
-        # set the reward for
-        print('setting table lost for player {}'.format(self.value))
-        self.q.table[self.curr] = -1
-        self.update()
-        print(self.q.table[self.curr[:-1]])
+        state_action = [*state, move]
+        # print(f"state_action {state_action}")
+        self.trajectory = [*self.trajectory, state_action]
 
-    def won(self):
-        print('setting table win for player {}'.format(self.value))
-        #self.q.table[self.curr] = 1
-        self.update()
-        print(self.q.table[self.curr[:-1]])
+    def update(self, last_move=False):
+        # print(f"player {self.value}")
 
-    def tied(self):
-        self.q.table[self.curr] = 0.1
-        self.update()
+        def _pair(acc, curr):
+            pairs, prev = acc
+            if prev is None:
+                return ([], curr)
+            pairs = [*pairs, (prev, curr)]
+            return pairs, curr
+        pairs, _ = functools.reduce(_pair, self.trajectory, ([], None))
+        
+        self.q.update(self.trajectory[-1], None, terminal=True)
+        for s0, s1 in list(reversed(pairs)):
+            self.q.update(s0, s1)
 
-# reward is always zero except for last step
-def reward_wrap(value):
-    def reward(state):
-        board = np.array(state[:-1]).reshape((3,3,))
-        move = to_coords(state[-1])
-        return 0.1 * count_in_path(board, move, value) 
-    return reward
 
-def count_in_path(board, coords, value):
-    row, col = coords
-    matching = len(np.where(board[:,col] == value))
-    matching += len(np.where(board[row,:] == value))
-    if row + col in [0, 2, 4]:
-        matching += len(np.where(np.diag(board) == value))
-        matching += len(np.where(np.diag(np.rot90(board)) == value))
-    return matching
+    # reward is always zero except for last step
+    def reward(self):
+        def fn(state):
+            reward = 0.0
+            state = np.array(state).reshape((3,3,))
+            if self.env.is_over(state):
+                result = self.env.result(self.value)
+                if result == 'win':
+                    # print(f'player {self.value} has won')
+                    reward = 1.0
+                elif result == 'draw':
+                    # print(f'player {self.value} has drawn')
+                    reward = 0.5
+                else:
+                    # print(f'player {self.value} has lost')
+                    reward = -20.0
+
+            return reward
+        return fn
+
 
     
 
@@ -72,13 +80,7 @@ def actions_filter(state):
     return zeros
 
 def to_coords(move):
-    x = int(move / 3)
+    x = move // 3
     y = move % 3
     return x,y,
 
-def state_to_board(state, p):
-    coords = to_coords(state[-1])
-    board = state[0:9].reshape((3,3,))
-    board[coords] = p
-    return board
-    

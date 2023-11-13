@@ -18,46 +18,42 @@ class Q:
         self.r = r
         self.discretize = discretize
         self.table = np.zeros(shape) if table is None else table
+        self.table.fill(1.0)
         self.actions_filter = actions_filter
         self.randomness = randomness
 
-    def update(self, s0, s1, playa, alpha=0.1, gamma=0.9):
+    def update(self, s0, s1, alpha=0.5, gamma=0.8, terminal=False):
         ds0 = self.discretize(s0)
         ds1 = self.discretize(s1)
-        s1max = self.argmax(ds1)
-        reward = self.r(s0)
-        value = ((1 - alpha) * self.table[ds0]) + (alpha * (reward + (gamma * self.table[s1max])))
-        self.table[ds0] = value
+
+        # terminal state has no next state, so return reward
+        if terminal:
+            self.table[*ds0] = self.r(s0[:-1])
+            return self.table
+
+        # remove action
+        s1max = self.argmax(ds1[:-1])
+        reward = self.r(s1[:-1])
+
+        value = ((1 - alpha) * self.table[*ds0]) + (alpha * (reward + (gamma * self.table[*s1max])))
+        # print(f'updating {ds0} {self.table[*ds0]} to {value}, reward {reward} of {s1[:-1]}')
+        self.table[*ds0] = value
         return self.table
 
-    def argmax(self, state):
-        *state, _ = state
-        action_indexes = self.actions_filter(state)
-        allowed_states = (*state, action_indexes)
-        if np.any(self.table[allowed_states] == 0) or random.random() < self.randomness:
-            best_action = np.random.choice(range(len(self.table[allowed_states])))
-        else:
-            best_action = np.argmax(self.table[allowed_states])
-        ret = *state, action_indexes[best_action]
-        return ret
+    def argmax(self, state, deterministic=False):
+        allowed_indices = self.actions_filter(state)
+        allowed_q_table = self.table[*state][allowed_indices]
+        if len(allowed_indices):
+            if not deterministic and random.random() < self.randomness:
+                best_action_idx = random.randint(0, len(allowed_q_table)) - 1
+            else:
+                best_action_idx = np.argmax(allowed_q_table)
 
-    def learn(self, states, iterations=10, alpha=0.7, gamma=0.9, callback=None):
-        for i in range(iterations):
-            #print('starting iteration {}'.format(i))
-            states_iter = states()
-            try:
-                s0 = next(states_iter)
-            except StopIteration:
-                continue
-            for s1 in states_iter:
-                #print(s0)
-                self.update(s0, s1, alpha, gamma)
-                s0 = s1
-            # include last state
-            self.table[self.discretize(s0)] += self.r(s0)
-            if callback is not None:
-                callback()
-        # print('table', self.table)
+            original_idx = allowed_indices[best_action_idx]
+        else:
+            original_idx = -1 # dummy index if no allowed moves
+
+        return *state, original_idx
 
     def store(self, filename):
         np.save(filename, self.table)

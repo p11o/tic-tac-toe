@@ -1,4 +1,4 @@
-const HOST = 'http://localhost:8888';
+const HOST = 'http://localhost:8001';
 
 const boardTemplate = board => {
     return `
@@ -26,9 +26,8 @@ const boardTemplate = board => {
 
 const renderBoard = board => {
     const $board = document.querySelector('#board');
-    board = JSON.parse(JSON.stringify(board).replace(/0/g, '""'));
-    board = JSON.parse(JSON.stringify(board).replace(/1/g, '"O"'));
-    board = JSON.parse(JSON.stringify(board).replace(/2/g, '"X"'));
+    const mapping = ["", "O", "X"];
+    board = board.map(row => row.map(el => mapping[el]));
     $board.innerHTML = boardTemplate(board);
 };
 

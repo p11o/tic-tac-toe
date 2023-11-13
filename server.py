@@ -15,7 +15,6 @@ except Exception as e:
     print('couldnt load stuff')
     print(e)
 
-
 class ClientHandler(tornado.web.RequestHandler):
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
@@ -25,7 +24,8 @@ class ClientHandler(tornado.web.RequestHandler):
     def put(self):
         body = json.loads(self.request.body)
         coords = body['coords']
-        game.state[tuple(coords)] = CLIENT
+        if not game.is_over():
+            game.state[tuple(coords)] = CLIENT
 
         self.write(json.dumps({
             'board': game.state.tolist(),
@@ -46,10 +46,13 @@ class RobotHandler(tornado.web.RequestHandler):
         pass
 
     def put(self):
-        print('probabilities for game:')
+        print('game state:')
+        print(game.state)
+        print('game probs:')
         print(player.q.table[tuple(game.state.flatten())].reshape((3,3)))
-        player.play(game)
-        player.update()
+        if not game.is_over():
+            player.play()
+
         self.write(json.dumps({
             'board': game.state.tolist(),
             'over': game.is_over()
@@ -66,13 +69,16 @@ class GameHandler(tornado.web.RequestHandler):
         pass
 
     def post(self):
-        if game.result(CPU) == 'win':
-            player.won()
-            player.q.store('player_1')
-        if game.result(CLIENT) == 'win':
-            player.lost()
-            player.q.store('player_1')
-        game.anew()
+        if game.is_over():
+            player.play()
+            player.update()
+        try:
+            player.q.load('player_1.npy')
+        except Exception as e:
+            print('couldnt load stuff')
+            print(e)
+        game.reset()
+        player.reset()
         self.write(json.dumps({
             'board': game.state.tolist(),
             'over': game.is_over()
