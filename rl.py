@@ -31,7 +31,6 @@ class Q:
             self.table[*ds0] = self.r(s0[:-1])
             return self.table
 
-        # remove action
         s1max = self.argmax(ds1[:-1])
         reward = self.r(s1[:-1])
 
