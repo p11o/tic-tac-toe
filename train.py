@@ -3,6 +3,11 @@ import player as p
 import random
 import signal
 import sys
+import logging
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+
+
 
 game = g.Game()
 player_1 = p.Player(1, game, randomness=0.0)
@@ -31,30 +36,29 @@ def signal_handler(signal, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-try:
-    player_1.q.load('player_1.npy')
-except Exception:
-    print('failed loading stuff')
-    pass
+def _load(player, model):
+    try:
+        player.q.load(f'{model}.npy')
+    except Exception:
+        logging.info('Failed to load model')
+        pass
 
-try:
-    player_2.q.load('player_2.npy')
-except Exception:
-    print('failed loading stuff')
-    pass
+
+_load(player_1, 'player_1')
+_load(player_2, 'player_2')
 
 
 
 i = 0
 while True:
     if i % 100 == 0:
-        print(f"Starting game {i}")
+        logging.info(f"Starting game {i}")
     if i % 1000 == 0 and i > 0:
-        print("Storing q table")
+        logging.info("Storing q table")
         player_1.q.store('player_1')
         player_2.q.store('player_2')
         # player_1.q.randomness /= 1.1
         # player_2.q.randomness /= 1.1
-        print(f"New randomness {player_1.q.randomness}")
+        logging.info(f"New randomness {player_1.q.randomness}")
     main()
     i += 1

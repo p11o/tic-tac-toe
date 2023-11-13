@@ -1,0 +1,35 @@
+version: '3.9'
+
+services:
+  back:
+    build: .
+    volumes:
+    - .:/app
+    working_dir: /app
+    profiles:
+    - play
+    ports:
+    - 8001:8001
+  front:
+    image: python:3.12
+    volumes:
+    - .:/app
+    working_dir: /app
+    profiles:
+    - play
+    ports:
+    - 8000:8000
+    command:
+    - python
+    - -m
+    - http.server
+    - '8000'
+  train:
+    build: .
+    profiles:
+    - train
+    working_dir: /app
+    volumes:
+    - .:/app
+    command: |
+      python train.py

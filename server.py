@@ -5,15 +5,25 @@ import game as g
 import json
 import numpy as np
 
+import logging
+import sys
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+
+
 CPU = 1
 CLIENT = 2
 game = g.Game()
 player = p.Player(CPU, game)
-try:
-    player.q.load('player_1.npy')
-except Exception as e:
-    print('couldnt load stuff')
-    print(e)
+
+def _load_model():
+    try:
+        player.q.load('player_1.npy')
+    except Exception as e:
+        logging.info('Failed to load model')
+
+
+_load_model()
 
 class ClientHandler(tornado.web.RequestHandler):
     def set_default_headers(self):
@@ -46,10 +56,10 @@ class RobotHandler(tornado.web.RequestHandler):
         pass
 
     def put(self):
-        print('game state:')
-        print(game.state)
-        print('game probs:')
-        print(player.q.table[tuple(game.state.flatten())].reshape((3,3)))
+        logging.info('game state:')
+        logging.info(game.state)
+        logging.info('game probs:')
+        logging.info(player.q.table[tuple(game.state.flatten())].reshape((3,3)))
         if not game.is_over():
             player.play()
 
@@ -72,11 +82,7 @@ class GameHandler(tornado.web.RequestHandler):
         if game.is_over():
             player.play()
             player.update()
-        try:
-            player.q.load('player_1.npy')
-        except Exception as e:
-            print('couldnt load stuff')
-            print(e)
+        _load_model()
         game.reset()
         player.reset()
         self.write(json.dumps({
@@ -99,6 +105,6 @@ def make_app():
 
 if __name__ == "__main__":
     app = make_app()
-    app.listen(8888)
+    app.listen(8001)
     tornado.ioloop.IOLoop.current().start()
     
