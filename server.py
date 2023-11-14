@@ -25,12 +25,19 @@ def _load_model():
 
 _load_model()
 
-class ClientHandler(tornado.web.RequestHandler):
+
+class CORSHandler(tornado.web.RequestHandler):
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Access-Control-Allow-Headers", "x-requested-with")
         self.set_header('Access-Control-Allow-Methods', 'POST, PUT, GET, OPTIONS')
 
+
+    def options(self):
+        pass
+
+
+class ClientHandler(CORSHandler):
     def put(self):
         body = json.loads(self.request.body)
         coords = body['coords']
@@ -42,19 +49,8 @@ class ClientHandler(tornado.web.RequestHandler):
             'over': game.is_over()
         }))
 
-    def options(self):
-        pass
 
-        
-class RobotHandler(tornado.web.RequestHandler):
-    def set_default_headers(self):
-        self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
-        self.set_header('Access-Control-Allow-Methods', 'POST, PUT, GET, OPTIONS')
-
-    def options(self):
-        pass
-
+class RobotHandler(CORSHandler):
     def put(self):
         logging.info('game state:')
         logging.info(game.state)
@@ -69,15 +65,7 @@ class RobotHandler(tornado.web.RequestHandler):
         }))
 
 
-class GameHandler(tornado.web.RequestHandler):
-    def set_default_headers(self):
-        self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
-        self.set_header('Access-Control-Allow-Methods', 'POST, PUT, GET, OPTIONS')
-
-    def options(self):
-        pass
-
+class GameHandler(CORSHandler):
     def post(self):
         if game.is_over():
             player.play()
@@ -95,6 +83,7 @@ class GameHandler(tornado.web.RequestHandler):
             'board': game.state.tolist(),
             'over': game.is_over()
         }))
+
 
 def make_app():
     return tornado.web.Application([

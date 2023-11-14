@@ -13,6 +13,28 @@ game = g.Game()
 player_1 = p.Player(1, game, randomness=0.0)
 player_2 = p.Player(2, game, randomness=0.0)
 
+
+def _load(player, model):
+    try:
+        player.q.load(f'{model}.npy')
+    except Exception:
+        logging.info('Failed to load model')
+        pass
+
+
+_load(player_1, 'player_1')
+_load(player_2, 'player_2')
+
+
+def signal_handler(signal, frame):
+    player_1.q.store('player_1')
+    player_2.q.store('player_2')
+    logging.info('Saved models')
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+
+
 def main():
     game.reset()
     player_1.reset()
@@ -27,38 +49,13 @@ def main():
     player_2.update(last_move=p == player_2)
 
 
-def signal_handler(signal, frame):
-    player_1.q.store('player_1')
-    player_2.q.store('player_2')
-    print('stored stuff')
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler)
-
-
-def _load(player, model):
-    try:
-        player.q.load(f'{model}.npy')
-    except Exception:
-        logging.info('Failed to load model')
-        pass
-
-
-_load(player_1, 'player_1')
-_load(player_2, 'player_2')
-
-
-
 i = 0
 while True:
     if i % 100 == 0:
         logging.info(f"Starting game {i}")
     if i % 1000 == 0 and i > 0:
-        logging.info("Storing q table")
+        logging.info("Saving models")
         player_1.q.store('player_1')
         player_2.q.store('player_2')
-        # player_1.q.randomness /= 1.1
-        # player_2.q.randomness /= 1.1
-        logging.info(f"New randomness {player_1.q.randomness}")
     main()
     i += 1

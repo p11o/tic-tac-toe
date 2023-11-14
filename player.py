@@ -30,12 +30,11 @@ class Player:
 
             env.state[to_coords(move)] = self.value
 
+        # record trajectory (only needed for training)
         state_action = [*state, move]
-        # print(f"state_action {state_action}")
         self.trajectory = [*self.trajectory, state_action]
 
-    def update(self, last_move=False):
-        # print(f"player {self.value}")
+    def update(self):
 
         def _pair(acc, curr):
             pairs, prev = acc
