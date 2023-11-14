@@ -45,8 +45,8 @@ def main():
         p = player_1 if p is player_2 else player_2
     player_1.play()
     player_2.play()
-    player_1.update(last_move=p == player_1)
-    player_2.update(last_move=p == player_2)
+    player_1.update()
+    player_2.update()
 
 
 i = 0
