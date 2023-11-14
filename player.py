@@ -57,13 +57,10 @@ class Player:
             if self.env.is_over(state):
                 result = self.env.result(self.value)
                 if result == 'win':
-                    # print(f'player {self.value} has won')
                     reward = 1.0
                 elif result == 'draw':
-                    # print(f'player {self.value} has drawn')
                     reward = 0.5
                 else:
-                    # print(f'player {self.value} has lost')
                     reward = -20.0
 
             return reward
