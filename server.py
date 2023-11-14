@@ -104,6 +104,7 @@ def make_app():
     ])
 
 if __name__ == "__main__":
+    logging.getLogger("tornado.access").propagate = False
     app = make_app()
     app.listen(8001)
     tornado.ioloop.IOLoop.current().start()
