@@ -49,13 +49,11 @@ def main():
     player_2.update()
 
 
-i = 0
-while True:
-    if i % 100 == 0:
-        logging.info(f"Starting game {i}")
-    if i % 1000 == 0 and i > 0:
-        logging.info("Saving models")
-        player_1.q.store('player_1')
-        player_2.q.store('player_2')
+for i in range(1001):
     main()
-    i += 1
+    if i % 100 == 0 and i > 0:
+        logging.info(f"Played {i} games...")
+
+logging.info("Saving models")
+player_1.q.store('player_1')
+player_2.q.store('player_2')
