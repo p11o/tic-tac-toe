@@ -1,4 +1,4 @@
-import numpy as np
+import torch
 
 class Game:
 
@@ -6,7 +6,7 @@ class Game:
         self.reset()
 
     def reset(self):
-        self.state = np.zeros((3,3,), int)
+        self.state = torch.zeros((3,3,), dtype=torch.int32)
 
     def result(self, player):
         return _result(self.state, player)
@@ -18,11 +18,12 @@ class Game:
 
 
 def _win(state, player):
+    # print(f"_win(): {state=} {player=}")
     return (
-        np.any(np.all(state == player, axis=0)) or
-        np.any(np.all(state == player, axis=1)) or
-        np.all(np.diag(state) == player) or
-        np.all(np.diag(np.rot90(state)) == player)
+        torch.any(torch.all(state == player, axis=0)) or
+        torch.any(torch.all(state == player, axis=1)) or
+        torch.all(torch.diag(state) == player) or
+        torch.all(torch.diag(torch.rot90(state)) == player)
     )
 
 

@@ -16,7 +16,7 @@ player_2 = p.Player(2, game, randomness=0.0)
 
 def _load(player, model):
     try:
-        player.q.load(f'{model}.npy')
+        player.q.load(model)
     except Exception:
         logging.info('Failed to load model')
         pass
@@ -35,25 +35,32 @@ def signal_handler(signal, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
+PLAYERS = [player_1, player_2]
+
 def main():
+    players = random.sample(PLAYERS, k=2)
     game.reset()
-    player_1.reset()
-    player_2.reset()
-    p = random.choice([player_1, player_2])
+    for p in players:
+        p.reset()
+
     while not game.is_over():
+        for p in players:
+            p.play()
+
+    loss = []
+    for p in players:
         p.play()
-        p = player_1 if p is player_2 else player_2
-    player_1.play()
-    player_2.play()
-    player_1.update()
-    player_2.update()
+        loss.append(p.update())
+    return loss
 
+print("HIIII")
 
-for i in range(1001):
-    main()
+for i in range(6_001):
+    loss = main()
     if i % 100 == 0 and i > 0:
-        logging.info(f"Played {i} games...")
+        print(f"{i} {loss=}", flush=True)
+        logging.info("Saving models")
+        player_1.q.store('player_1')
+        player_2.q.store('player_2')
+        logging.info(f"{player_1.env.state}")
 
-logging.info("Saving models")
-player_1.q.store('player_1')
-player_2.q.store('player_2')

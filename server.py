@@ -18,9 +18,9 @@ player = p.Player(CPU, game)
 
 def _load_model():
     try:
-        player.q.load('player_1.npy')
+        player.q.load('player_1')
     except Exception as e:
-        logging.info('Failed to load model')
+        logging.info(f'Failed to load model {e}')
 
 
 _load_model()
@@ -55,7 +55,7 @@ class RobotHandler(CORSHandler):
         logging.info('game state:')
         logging.info(game.state)
         logging.info('game probs:')
-        logging.info(player.q.table[tuple(game.state.flatten())].reshape((3,3)))
+        logging.info(player.q.table(game.state.flatten()))
         if not game.is_over():
             player.play()
 

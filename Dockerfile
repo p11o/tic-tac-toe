@@ -1,5 +1,5 @@
-FROM python:3.12
+FROM python:3.11
 
-RUN pip install numpy tornado
+RUN pip install numpy tornado torch
 
 CMD ["python", "server.py"]
