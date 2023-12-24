@@ -8,13 +8,14 @@ class Player:
 
     def __init__(self, value, env, randomness=0.0):
         self.value = value # 1 or 2 for first or second player
-        self.shape = (9, 9)
+        self.input_dim = 9
+        self.output_dim = 9
         self.other = 2 if value == 1 else 1
         self.env = env
         self.trajectory = []
         self.q = rl.QNet(
             self.reward(),
-            self.shape,
+            (self.input_dim, self.output_dim),
             mask=action_mask,
             randomness=randomness
         )
@@ -27,17 +28,20 @@ class Player:
         env = self.env
         move = -1 # set move to -1 if end of game
         state = env.state.flatten().clone()
+        move_tensor = torch.zeros(self.input_dim)
         # print(f"play(): Player {self.value} {state=}")
         if not env.is_over():
             argmax = self.q.argmax(state)
-            move = argmax[-1]
+            move = argmax[self.input_dim:]
+            move = torch.where(move == 1)[0].flatten().item()
             env.state[to_coords(move)] = self.value
+            move_tensor[move] = 1
             # record trajectory (only needed for training)
             # print(f"play(): Player {self.value} {state} {move}")
-            state_action = torch.cat([state, torch.tensor([move])])
+            state_action = torch.cat([state, move_tensor])
             self.trajectory.append(state_action)
         elif env.result(self.value) == 'lose':
-            self.trajectory.append(torch.cat([state, torch.tensor([move])]))
+            self.trajectory.append(torch.cat([state, move_tensor]))
             
 
     def update(self):
@@ -58,9 +62,8 @@ class Player:
             self.q.update(s0, s1)
 
         for state, _ in pairs:
-            state = state[:-1]
-            target = torch.zeros(self.shape[1]) # output size
-            mask = action_mask(state)
+            target = torch.zeros(self.output_dim)
+            mask = action_mask(state[0:self.input_dim])
             for i in torch.nonzero(mask).flatten():
                 i = i.item()
                 modified_state = state.clone()
@@ -72,6 +75,7 @@ class Player:
             optimizer.zero_grad()
 
             # Forward pass to get outputs from QModel
+            state = state[0:self.input_dim]
             prediction = self.q.table(state)
 
             # Calculate loss

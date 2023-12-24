@@ -28,7 +28,7 @@ class RewardPredictionModel(nn.Module):
     """Returns reward value for given state"""
     def __init__(self, input_dim):
         super(RewardPredictionModel, self).__init__()
-        self.fc1 = nn.Linear(input_dim, 64)
+        self.fc1 = nn.Linear(2 * input_dim, 64)
         self.fc2 = nn.Linear(64, 128)
         self.fc3 = nn.Linear(128, 64)
         self.fc4 = nn.Linear(64, 1)
@@ -60,27 +60,28 @@ class QNet:
         self.r = r
         self.mask = mask
         self.discretize = discretize
+        self.input_dim = shape[0]
         self.table = QModel(*shape)
         self.reward = RewardPredictionModel(shape[0])
         self.randomness = randomness
-        self.optimizer = optim.SGD(self.reward.parameters(), lr=0.005)
+        self.optimizer = optim.SGD(self.reward.parameters(), lr=0.008)
         self.reward_loss_function = nn.MSELoss()
 
     def update(self, s0, s1, alpha=0.5, gamma=0.8, terminal=False):
-        ds0 = torch.tensor(self.discretize(s0[:-1]))
+        ds0 = torch.tensor(self.discretize(s0))
         if not terminal:
-            ds1 = torch.tensor(self.discretize(s1[:-1]))
+            ds1 = torch.tensor(self.discretize(s1))
 
         # terminal state has no next state, so return reward
         if terminal:
-            reward = self.r(ds0)
+            reward = self.r(ds0[0:self.input_dim])
 
         else:
             s1max = self.argmax(ds1)
-            r = self.r(ds1)
+            r = self.r(ds1[0:self.input_dim])
 
             s0_reward = self.reward(ds0)
-            s1_reward = self.reward(s1max[:-1])
+            s1_reward = self.reward(s1max)
 
             reward = ((1 - alpha) * s0_reward) + (alpha * (r + (gamma * s1_reward)))
         
@@ -101,18 +102,19 @@ class QNet:
 
 
     def argmax(self, state: torch.tensor):
+        state = state[0:self.input_dim]
         rewards = self.table(state)
         mask = self.mask(state)
         action = torch.argmax(self.mask(state) * rewards)
+        action_tensor = torch.zeros(self.input_dim)
         if mask[action] != 1:
-            if torch.all(mask == 0):
-                action = -1
-            else:
+            if not torch.all(mask == 0):
                 nonzero_indices = torch.nonzero(mask).flatten()
                 random_index = torch.randint(0, len(nonzero_indices), size=(1,)).item()
                 action = nonzero_indices[random_index]
+        action_tensor[action] = 1
 
-        argmax = torch.tensor((*state, action))
+        argmax = torch.cat([state, action_tensor])
         # print(f"argmax: {state=} mask={self.mask(state)} {rewards=} {argmax=}")
         
         return argmax
