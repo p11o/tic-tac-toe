@@ -29,5 +29,10 @@ def main():
         player_1.update(reward_p1)
         player_2.update(reward_p2)
 
+ 
+    # Save models after training
+    player_1.save_model()
+    player_2.save_model()       
+
 if __name__ == "__main__":
     main()

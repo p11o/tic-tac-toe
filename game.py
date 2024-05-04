@@ -12,7 +12,7 @@ class Game:
 
     def is_over(self):
         # Explicitly handle the possibility of multiple elements in the result check
-        return np.any([self.result(1) is not None, self.result(2) is not None])
+        return bool(np.any([self.result(1) is not None, self.result(2) is not None]))
 
     def _win(self, state, player):
         winning_conditions = [

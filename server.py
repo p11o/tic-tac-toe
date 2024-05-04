@@ -3,7 +3,6 @@ import tornado.web
 import player as p
 import game as g
 import json
-import numpy as np
 
 import logging
 import sys
@@ -18,7 +17,7 @@ player = p.Player(CPU, game)
 
 def _load_model():
     try:
-        player.q.load('player_1')
+        player.load_model()
     except Exception as e:
         logging.info(f'Failed to load model {e}')
 
@@ -55,7 +54,7 @@ class RobotHandler(CORSHandler):
         logging.info('game state:')
         logging.info(game.state)
         logging.info('game probs:')
-        logging.info(player.q.table(game.state.flatten()))
+        logging.info(player.table(game.state.flatten()))
         if not game.is_over():
             player.play()
 
@@ -73,12 +72,16 @@ class GameHandler(CORSHandler):
         _load_model()
         game.reset()
         player.reset()
+        logging.info(f"{game.state.tolist()}")
+        logging.info(f"{game.is_over()}")
         self.write(json.dumps({
             'board': game.state.tolist(),
             'over': game.is_over()
         }))
 
     def get(self):
+        logging.info(f"{game.state.tolist()}")
+        logging.info(f"{game.is_over()}")
         self.write(json.dumps({
             'board': game.state.tolist(),
             'over': game.is_over()
@@ -90,7 +93,7 @@ def make_app():
         (r"/client/move", ClientHandler),
         (r"/robot/move", RobotHandler),
         (r"/game", GameHandler),
-    ])
+    ], autoreload=True  )
 
 if __name__ == "__main__":
     logging.getLogger("tornado.access").propagate = False
