@@ -38,11 +38,16 @@ const fetchBoard = () => {
 };
 
 const sendMove = coords => {
+    coords = JSON.parse(coords);
     return fetch(`${HOST}/client/move`, {
         method: 'PUT',
-        body: `{"coords":${coords}}`
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({coords})
     }).then(res => res.json());
 };
+
 
 const fetchRobotMove = () => {
     return fetch(`${HOST}/robot/move`, {
@@ -56,28 +61,29 @@ const createNewGame = () => {
 
 const main = () => {
     fetchBoard().then(({board}) => renderBoard(board));
+
     document.body.addEventListener('click', e => {
         const $target = e.target;
-        if ($target.matches('td') && $target.textContent == '') {
-            $target.textContent = 'X';
-            fetchBoard().then(({over}) => {
-                if (!over) {
-                    return sendMove(
-                        $target.getAttribute('data-coord')
-                    ).then(({board, over}) => {
-                       if (!over) {
-                           return fetchRobotMove().then(({board}) => {
-                               return renderBoard(board);
-                           });
-                        }
-                    });
-                }
-            }).catch(e => {
-                console.error(e);
-                alert(e.message);
-            });
+    
+        if ($target.matches('td') && $target.textContent === '') {
+            sendMove($target.getAttribute('data-coord'))
+                .then(({board, over}) => {
+                    renderBoard(board);
+                    if (!over) {
+                        fetchRobotMove().then(({board}) => renderBoard(board));
+                    }
+                })
+                .catch(e => {
+                    console.error(e);
+                    alert(e.message);
+                });
+        } else if ($target.matches('.new')) {
+            createNewGame().then(({board}) => renderBoard(board));
+        } else if ($target.matches('.cpu')) {
+            fetchRobotMove().then(({board}) => renderBoard(board));
         }
     });
+    
 
     document.body.addEventListener('click', e => {
         const $target = e.target;

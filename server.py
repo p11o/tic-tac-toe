@@ -2,6 +2,7 @@ import tornado.ioloop
 import tornado.web
 import player as p
 import game as g
+import numpy as np
 import json
 import logging
 import sys
@@ -11,11 +12,11 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 CPU = 1
 CLIENT = 2
 game = g.Game()
-player = p.Player(CPU, game, randomness=0.1)  # Assume some randomness for player moves
+player = p.Player(CPU, game, randomness=0.0)  # Assume some randomness for player moves
 
 def _load_model():
     try:
-        player.load_model('player_model.npy')  # Assuming 'player_model.npy' is your model file
+        player.load_model()
     except Exception as e:
         logging.info(f'Failed to load model: {str(e)}')
 
@@ -45,8 +46,14 @@ class ClientHandler(CORSHandler):
 class RobotHandler(CORSHandler):
     def put(self):
         if not game.is_over():
-            player.play()
-            player.update(0)  # Ensure the update method has the correct parameters if needed
+            empties, actions = player.play()
+            board = np.full((3, 3), np.nan)
+
+            for value, index in zip(actions, empties):
+                # Convert 1D index to 2D index and insert the value
+                board[np.unravel_index(index, (3, 3))] = value
+            logging.info(f"\n{board}")
+            # player.update(0)  # Ensure the update method has the correct parameters if needed
 
         self.write(json.dumps({
             'board': game.state.tolist(),
@@ -57,7 +64,7 @@ class GameHandler(CORSHandler):
     def post(self):
         if game.is_over():
             player.play()
-            player.update(0)
+            # player.update(0)
         _load_model()
         game.reset()
         player.reset()
