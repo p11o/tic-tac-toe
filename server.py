@@ -13,14 +13,8 @@ CPU = 1
 CLIENT = 2
 game = g.Game()
 player = p.Player(CPU, game, randomness=0.0)  # Assume some randomness for player moves
+player.load_model()
 
-def _load_model():
-    try:
-        player.load_model()
-    except Exception as e:
-        logging.info(f'Failed to load model: {str(e)}')
-
-_load_model()
 
 class CORSHandler(tornado.web.RequestHandler):
     def set_default_headers(self):
@@ -65,7 +59,7 @@ class GameHandler(CORSHandler):
         if game.is_over():
             player.play()
             # player.update(0)
-        _load_model()
+        player.load_model()
         game.reset()
         player.reset()
         self.write(json.dumps({
